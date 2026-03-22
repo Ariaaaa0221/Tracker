@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>體態計劃</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0d0b;
+  --surface: #1a1814;
+  --surface2: #242018;
+  --border: rgba(255,255,255,0.07);
+  --text: #f0ebe3;
+  --muted: #6b6358;
+  --dim: #3a342c;
+  --gold: #c9a96e;
+  --gold-dim: rgba(201,169,110,0.15);
+  --green: #7eb89a;
+  --green-dim: rgba(126,184,154,0.12);
+  --red: #c47a6a;
+  --red-dim: rgba(196,122,106,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  font-weight:300;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── SCROLLABLE MAIN ── */
+.app-body{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:80px;
+}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── NAV ── */
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:72px;
+  background:rgba(14,13,11,0.95);
+  backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex;
+  z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:4px;cursor:pointer;
+  color:var(--muted);font-size:9px;letter-spacing:0.1em;
+  transition:color 0.2s;
+  user-select:none;
+}
+.nav-item.active{color:var(--gold);}
+.nav-icon{font-size:20px;line-height:1;}
+
+/* ── TYPOGRAPHY ── */
+.page-header{padding:52px 24px 20px;}
+.page-eyebrow{
+  font-size:10px;letter-spacing:0.35em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+}
+.page-title{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:400;line-height:1.1;
+  color:var(--text);
+}
+.page-title em{font-style:italic;color:var(--gold);}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  margin:0 16px 12px;
+  overflow:hidden;
+}
+.card-header{
+  padding:16px 18px 0;
+  font-size:10px;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--muted);
+}
+.card-body{padding:14px 18px 18px;}
+
+/* ── DASHBOARD ── */
+.dash-hero{
+  margin:0 16px 12px;
+  background: linear-gradient(135deg, #1e1a12 0%, #2a2318 100%);
+  border:1px solid rgba(201,169,110,0.2);
+  border-radius:20px;
+  padding:22px 20px;
+  position:relative;
+  overflow:hidden;
+}
+.dash-hero::before{
+  content:'';position:absolute;
+  top:-40px;right:-40px;
+  width:160px;height:160px;
+  background:radial-gradient(circle,rgba(201,169,110,0.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.dash-date{
+  font-size:11px;letter-spacing:0.25em;
+  color:var(--muted);margin-bottom:12px;
+}
+.dash-greeting{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:400;
+  line-height:1.3;margin-bottom:16px;
+}
+.dash-greeting em{font-style:italic;color:var(--gold);}
+.dash-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.dash-stat-val{
+  font-family:'Playfair Display',serif;
+  font-size:26px;font-weight:400;color:var(--gold);
+  line-height:1;
+}
+.dash-stat-label{font-size:10px;color:var(--muted);margin-top:4px;}
+
+.section-label{
+  font-size:10px;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--muted);
+  padding:8px 24px 10px;
+}
+
+/* ── HABITS ── */
+.habits-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;padding:0 16px 0;
+}
+.habit-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;cursor:pointer;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.habit-card.done{
+  background:var(--green-dim);
+  border-color:rgba(126,184,154,0.25);
+}
+.habit-card.done::after{
+  content:'✓';
+  position:absolute;top:10px;right:12px;
+  color:var(--green);font-size:16px;
+}
+.habit-icon{font-size:22px;margin-bottom:8px;}
+.habit-name{font-size:12px;letter-spacing:0.05em;margin-bottom:4px;}
+.habit-streak{font-size:11px;color:var(--gold);}
+
+/* ── PROGRESS BARS ── */
+.prog-item{margin-bottom:18px;}
+.prog-header{
+  display:flex;justify-content:space-between;
+  align-items:baseline;margin-bottom:8px;
+}
+.prog-name{font-size:12px;letter-spacing:0.05em;}
+.prog-nums{
+  font-family:'Playfair Display',serif;
+  font-size:13px;color:var(--muted);
+}
+.prog-nums b{color:var(--gold);font-size:16px;font-weight:400;}
+.prog-track{
+  height:2px;background:var(--dim);
+  border-radius:2px;overflow:hidden;
+}
+.prog-fill{
+  height:100%;background:var(--gold);
+  border-radius:2px;
+  transition:width 1s cubic-bezier(0.16,1,0.3,1);
+}
+.prog-fill.done{background:var(--green);}
+.prog-delta{
+  font-size:10px;color:var(--green);
+  margin-top:5px;text-align:right;
+}
+.prog-delta.worse{color:var(--red);}
+
+/* ── TODAY MENU ── */
+.menu-time-block{
+  border-left:2px solid var(--gold-dim);
+  padding:0 0 20px 16px;
+  margin-left:20px;
+  position:relative;
+}
+.menu-time-block::before{
+  content:'';position:absolute;
+  left:-5px;top:4px;
+  width:8px;height:8px;
+  background:var(--gold);border-radius:50%;
+}
+.menu-time{
+  font-size:10px;letter-spacing:0.2em;
+  color:var(--gold);margin-bottom:6px;
+}
+.menu-label{font-size:13px;margin-bottom:4px;}
+.menu-detail{font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* ── RECORD FORM ── */
+.form-group{margin-bottom:24px;}
+.form-group-label{
+  font-size:10px;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.form-group-label::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+.form-row{
+  display:flex;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border);gap:12px;
+}
+.form-label{flex:1;font-size:13px;}
+.form-unit{font-size:11px;color:var(--muted);}
+.form-input{
+  width:90px;border:none;
+  background:var(--surface2);
+  border-radius:8px;padding:9px 12px;
+  font-size:16px;
+  font-family:'Playfair Display',serif;
+  color:var(--text);text-align:right;
+  outline:none;-webkit-appearance:none;
+}
+.form-input:focus{box-shadow:0 0 0 1.5px var(--gold);}
+input[type=date].form-input{
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:13px;width:140px;
+  color-scheme:dark;
+}
+
+.btn-primary{
+  width:100%;padding:16px;
+  background:var(--gold);color:var(--bg);
+  border:none;border-radius:12px;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:13px;font-weight:500;
+  letter-spacing:0.15em;cursor:pointer;
+  margin-top:8px;
+  transition:opacity 0.2s;
+}
+.btn-primary:active{opacity:0.8;}
+.btn-secondary{
+  width:100%;padding:14px;
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);border-radius:12px;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:12px;letter-spacing:0.1em;cursor:pointer;
+  margin-top:8px;transition:all 0.2s;
+}
+.btn-secondary:active{background:var(--surface2);}
+
+/* ── HISTORY LIST ── */
+.hist-item{
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+}
+.hist-date{
+  font-family:'Playfair Display',serif;
+  font-size:15px;margin-bottom:6px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.hist-weight{color:var(--gold);}
+.hist-dims{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.hist-tag{
+  font-size:10px;color:var(--muted);
+  background:var(--surface2);
+  padding:3px 8px;border-radius:20px;
+}
+.hist-tag span{color:var(--text);}
+.del-btn{
+  background:none;border:none;
+  color:var(--muted);font-size:18px;
+  cursor:pointer;padding:4px;line-height:1;
+}
+.del-btn:active{color:var(--red);}
+
+/* ── PLAN EDITOR ── */
+.plan-display{
+  font-size:13px;line-height:1.9;
+  color:var(--text);white-space:pre-wrap;
+  word-break:break-word;
+}
+.plan-textarea{
+  width:100%;min-height:400px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px;padding:16px;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:13px;line-height:1.8;
+  color:var(--text);resize:vertical;
+  outline:none;
+}
+.plan-textarea:focus{border-color:var(--gold);}
+.plan-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.plan-tab{
+  padding:7px 16px;border-radius:20px;
+  font-size:11px;letter-spacing:0.1em;
+  cursor:pointer;border:1px solid var(--border);
+  color:var(--muted);background:transparent;
+  transition:all 0.2s;
+}
+.plan-tab.active{
+  background:var(--gold-dim);
+  border-color:rgba(201,169,110,0.3);
+  color:var(--gold);
+}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:90px;left:50%;
+  transform:translateX(-50%) translateY(10px);
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:10px 20px;
+  border-radius:100px;font-size:12px;
+  letter-spacing:0.1em;opacity:0;
+  transition:all 0.25s;z-index:200;
+  white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── EMPTY ── */
+.empty{
+  text-align:center;padding:48px 0;
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:17px;
+  color:var(--muted);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.page.active > *{
+  animation:fadeUp 0.3s ease both;
+}
+.page.active > *:nth-child(2){animation-delay:0.05s;}
+.page.active > *:nth-child(3){animation-delay:0.1s;}
+.page.active > *:nth-child(4){animation-delay:0.15s;}
+.page.active > *:nth-child(5){animation-delay:0.2s;}
+</style>
+</head>
+<body>
+
+<div class="app-body" id="app-body">
+
+  <!-- ══════════════ DASHBOARD ══════════════ -->
+  <div class="page active" id="page-home">
+    <div style="padding:52px 16px 8px;">
+      <div class="dash-hero">
+        <div class="dash-date" id="dash-date"></div>
+        <div class="dash-greeting">今天也是<br><em>靠近目標</em>的一天</div>
+        <div class="dash-stats">
+          <div>
+            <div class="dash-stat-val" id="dash-weight">—</div>
+            <div class="dash-stat-label">目前體重 kg</div>
+          </div>
+          <div>
+            <div class="dash-stat-val" id="dash-lost">—</div>
+            <div class="dash-stat-label">已減少 kg</div>
+          </div>
+          <div>
+            <div class="dash-stat-val" id="dash-remain">—</div>
+            <div class="dash-stat-label">距目標 kg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">今日習慣打卡</div>
+    <div class="habits-grid" id="habits-grid"></div>
+
+    <div style="height:12px;"></div>
+    <div class="section-label">今日菜單</div>
+    <div class="card">
+      <div class="card-body" id="dash-menu"></div>
+    </div>
+
+    <div class="section-label">各部位進度</div>
+    <div class="card">
+      <div class="card-body" id="dash-progress"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ RECORD ══════════════ -->
+  <div class="page" id="page-record">
+    <div class="page-header">
+      <div class="page-eyebrow">Body Journal</div>
+      <div class="page-title">記錄<em>體態</em></div>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <div class="form-group">
+        <div class="form-group-label">記錄日期</div>
+        <div class="form-row">
+          <div class="form-label">日期</div>
+          <input type="date" class="form-input" id="rec-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-group-label">體重</div>
+        <div class="form-row">
+          <div class="form-label">體重</div>
+          <div class="form-unit">kg</div>
+          <input type="number" class="form-input" id="rec-weight" placeholder="68.0" step="0.1" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-group-label">圍度</div>
+        <div class="form-row"><div class="form-label">腰圍</div><div class="form-unit">cm</div><input type="number" class="form-input" id="rec-waist" placeholder="84" step="0.5" inputmode="decimal"></div>
+        <div class="form-row"><div class="form-label">臀圍</div><div class="form-unit">cm</div><input type="number" class="form-input" id="rec-hip" placeholder="99" step="0.5" inputmode="decimal"></div>
+        <div class="form-row"><div class="form-label">大腿圍</div><div class="form-unit">cm</div><input type="number" class="form-input" id="rec-thigh" placeholder="58" step="0.5" inputmode="decimal"></div>
+        <div class="form-row"><div class="form-label">小腿圍</div><div class="form-unit">cm</div><input type="number" class="form-input" id="rec-calf" placeholder="36" step="0.5" inputmode="decimal"></div>
+        <div class="form-row"><div class="form-label">上臂圍</div><div class="form-unit">cm</div><input type="number" class="form-input" id="rec-arm" placeholder="30" step="0.5" inputmode="decimal"></div>
+      </div>
+      <button class="btn-primary" onclick="saveRecord()">儲存記錄</button>
+
+      <div style="height:24px;"></div>
+      <div class="form-group-label" style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;">歷史記錄 <span style="flex:1;height:1px;background:var(--border);display:block;"></span></div>
+      <div id="history-list"><div class="empty">尚無記錄</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PLAN ══════════════ -->
+  <div class="page" id="page-plan">
+    <div class="page-header">
+      <div class="page-eyebrow">Diet &amp; Lifestyle</div>
+      <div class="page-title">我的<em>計劃</em></div>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <div class="plan-tabs">
+        <button class="plan-tab active" onclick="switchPlanTab('view',this)">查閱</button>
+        <button class="plan-tab" onclick="switchPlanTab('edit',this)">編輯</button>
+        <button class="plan-tab" onclick="switchPlanTab('menu',this)">今日菜單</button>
+      </div>
+
+      <!-- VIEW -->
+      <div id="plan-view">
+        <div class="card"><div class="card-body"><div class="plan-display" id="plan-display-text"></div></div></div>
+      </div>
+
+      <!-- EDIT -->
+      <div id="plan-edit" style="display:none;">
+        <p style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">在這裡撰寫或貼上你的減肥計劃。支援純文字，換行會被保留。</p>
+        <textarea class="plan-textarea" id="plan-textarea" placeholder="在這裡撰寫你的飲食計劃、運動目標、每月里程碑……"></textarea>
+        <button class="btn-primary" onclick="savePlan()">儲存計劃</button>
+      </div>
+
+      <!-- MENU EDIT -->
+      <div id="plan-menu" style="display:none;">
+        <p style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">設定今日菜單，會顯示在主頁。</p>
+        <div id="menu-blocks"></div>
+        <button class="btn-secondary" onclick="addMenuBlock()">＋ 新增時段</button>
+        <button class="btn-primary" onclick="saveMenu()" style="margin-top:12px;">儲存今日菜單</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app-body -->
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-item active" onclick="switchPage('home',this)">
+    <div class="nav-icon">⊡</div>
+    <div>主頁</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('record',this)">
+    <div class="nav-icon">◎</div>
+    <div>記錄</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('plan',this)">
+    <div class="nav-icon">≡</div>
+    <div>計劃</div>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const INITIAL = {weight:68,waist:84,hip:99,thigh:58,calf:36,arm:30};
+const TARGET  = {weight:49,waist:62,hip:88,thigh:50,calf:34,arm:24};
+const LABELS  = {weight:'體重',waist:'腰圍',hip:'臀圍',thigh:'大腿圍',calf:'小腿圍',arm:'上臂圍'};
+const UNITS   = {weight:'kg',waist:'cm',hip:'cm',thigh:'cm',calf:'cm',arm:'cm'};
+
+const HABITS_DEF = [
+  {id:'fast',  icon:'⏱', name:'斷食窗口',  desc:'12:00–20:00'},
+  {id:'walk',  icon:'🚶', name:'飯後散步',  desc:'15 分鐘'},
+  {id:'water', icon:'💧', name:'足量喝水',  desc:'1500cc 以上'},
+  {id:'sleep', icon:'🌙', name:'睡滿 7 小時', desc:''},
+];
+
+const DEFAULT_PLAN = `【三個月減重計劃】目標：61–62 kg（6月底）
+
+▌第一個月（4 月）
+• 建立 168 斷食習慣（12:00–20:00 進食窗口）
+• 每日飯後散步 15–20 分鐘
+• 拿鐵改用脫脂奶或豆漿，控制在 100 kcal 以內
+• 每日熱量目標：1,200–1,350 kcal
+• 目標體重：64–65 kg
+
+▌第二個月（5 月）
+• 穩定飲食結構，晚餐澱粉進一步減少
+• 散步升級為快走，維持每日執行
+• 開始每週一記錄體重與圍度
+• 目標體重：62–63 kg
+
+▌第三個月（6 月）
+• 維持並微調，增加選擇性運動（每週 1–2 次）
+• 鞏固新習慣，不靠意志力而靠流程
+• 目標體重：61–62 kg
+
+▌每日飲食結構
+午餐（12:00）：½ 碗糙米飯＋大量蒸蔬菜＋雞胸/蛋/豆腐
+點心（16:00）：雞蛋 / 無糖豆漿 / 少量堅果
+晚餐（19:30）：同午餐，澱粉減半或省略
+
+▌長期目標（2027 年初）
+接近高胤禎基準體態
+腰圍 62 cm、臀圍 88 cm、體重 48–50 kg`;
+
+const DEFAULT_MENU = [
+  {time:'12:00 午餐',  label:'211 餐盤', detail:'½ 碗糙米飯、蒸花椰菜 + 蒸雞胸肉 100g\n熱量約 400–450 kcal'},
+  {time:'16:00 點心',  label:'蛋白質補充', detail:'水煮蛋 1 顆 + 無糖豆漿 240cc\n熱量約 150–180 kcal'},
+  {time:'19:30 晚餐',  label:'輕食版餐盤', detail:'蒸蔬菜大量 + 豆腐或蛋、不吃澱粉\n熱量約 300–350 kcal'},
+];
+
+// ── STORAGE ──
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch{return def;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+// ── NAV ──
+function switchPage(name, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('app-body').scrollTop=0;
+  if(name==='home') renderHome();
+  if(name==='record') renderHistory();
+}
+
+// ── DATE ──
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function fmtDate(s){
+  const d=new Date(s+'T00:00:00');
+  return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日`;
+}
+function fmtDateShort(s){
+  const d=new Date(s+'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+// ── HABITS ──
+function getHabits(){
+  const today=todayStr();
+  const all=load('habits',{});
+  return all[today]||{};
+}
+function toggleHabit(id){
+  const today=todayStr();
+  const all=load('habits',{});
+  if(!all[today]) all[today]={};
+  all[today][id]=!all[today][id];
+  save('habits',all);
+  renderHome();
+}
+
+// ── RECORDS ──
+function saveRecord(){
+  const date=document.getElementById('rec-date').value;
+  if(!date){showToast('請選擇日期');return;}
+  const rec={
+    date,
+    weight:parseFloat(document.getElementById('rec-weight').value)||null,
+    waist: parseFloat(document.getElementById('rec-waist').value)||null,
+    hip:   parseFloat(document.getElementById('rec-hip').value)||null,
+    thigh: parseFloat(document.getElementById('rec-thigh').value)||null,
+    calf:  parseFloat(document.getElementById('rec-calf').value)||null,
+    arm:   parseFloat(document.getElementById('rec-arm').value)||null,
+  };
+  const hasData=Object.entries(rec).some(([k,v])=>k!=='date'&&v!==null);
+  if(!hasData){showToast('請至少填入一項數值');return;}
+  const recs=load('records',[]);
+  const idx=recs.findIndex(r=>r.date===date);
+  if(idx>=0)recs[idx]=rec;else recs.unshift(rec);
+  recs.sort((a,b)=>b.date.localeCompare(a.date));
+  save('records',recs);
+  ['rec-weight','rec-waist','rec-hip','rec-thigh','rec-calf','rec-arm'].forEach(id=>{document.getElementById(id).value='';});
+  renderHistory();
+  showToast('✓ 記錄已儲存');
+}
+function deleteRecord(i){
+  const recs=load('records',[]);
+  recs.splice(i,1);save('records',recs);
+  renderHistory();showToast('已刪除');
+}
+
+// ── PLAN ──
+function switchPlanTab(name,el){
+  ['view','edit','menu'].forEach(t=>{
+    document.getElementById('plan-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.plan-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(name==='view') renderPlanView();
+  if(name==='edit'){document.getElementById('plan-textarea').value=load('plan',DEFAULT_PLAN);}
+  if(name==='menu') renderMenuEditor();
+}
+function savePlan(){
+  save('plan',document.getElementById('plan-textarea').value);
+  showToast('✓ 計劃已儲存');
+}
+function renderPlanView(){
+  const txt=load('plan',DEFAULT_PLAN);
+  document.getElementById('plan-display-text').textContent=txt||'尚未撰寫計劃';
+}
+
+// ── MENU EDITOR ──
+function renderMenuEditor(){
+  const blocks=load('menu_blocks',DEFAULT_MENU);
+  const el=document.getElementById('menu-blocks');
+  el.innerHTML=blocks.map((b,i)=>`
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:10px;letter-spacing:0.2em;color:var(--gold);">時段 ${i+1}</span>
+        <button onclick="removeMenuBlock(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">×</button>
+      </div>
+      <input style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;margin-bottom:6px;outline:none;" 
+        placeholder="時間（如 12:00 午餐）" value="${escHtml(b.time)}" oninput="updateMenuBlock(${i},'time',this.value)">
+      <input style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;margin-bottom:6px;outline:none;"
+        placeholder="標題（如 211 餐盤）" value="${escHtml(b.label)}" oninput="updateMenuBlock(${i},'label',this.value)">
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;resize:none;outline:none;height:70px;"
+        placeholder="內容細節" oninput="updateMenuBlock(${i},'detail',this.value)">${escHtml(b.detail)}</textarea>
+    </div>
+  `).join('');
+}
+let _menuBuf=null;
+function getMenuBuf(){
+  if(!_menuBuf) _menuBuf=load('menu_blocks',DEFAULT_MENU).map(b=>({...b}));
+  return _menuBuf;
+}
+function updateMenuBlock(i,field,val){
+  const buf=getMenuBuf();buf[i][field]=val;
+}
+function addMenuBlock(){
+  const buf=getMenuBuf();
+  buf.push({time:'',label:'',detail:''});
+  _menuBuf=buf;renderMenuEditor();
+}
+function removeMenuBlock(i){
+  const buf=getMenuBuf();buf.splice(i,1);_menuBuf=buf;renderMenuEditor();
+}
+function saveMenu(){
+  const buf=getMenuBuf();
+  save('menu_blocks',buf);_menuBuf=null;
+  showToast('✓ 菜單已儲存');
+  renderHome();
+}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── RENDER HOME ──
+function renderHome(){
+  // Date
+  const now=new Date();
+  const days=['日','一','二','三','四','五','六'];
+  document.getElementById('dash-date').textContent=
+    `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日　週${days[now.getDay()]}`;
+
+  // Stats
+  const recs=load('records',[]);
+  const latestW=recs.find(r=>r.weight);
+  if(latestW){
+    const lost=(INITIAL.weight-latestW.weight).toFixed(1);
+    const rem=(latestW.weight-TARGET.weight).toFixed(1);
+    document.getElementById('dash-weight').textContent=latestW.weight;
+    document.getElementById('dash-lost').textContent=(lost>0?'−':'')+Math.abs(lost);
+    document.getElementById('dash-remain').textContent=rem>0?rem:'達標';
+  } else {
+    document.getElementById('dash-weight').textContent='—';
+    document.getElementById('dash-lost').textContent='—';
+    document.getElementById('dash-remain').textContent='—';
+  }
+
+  // Habits
+  const done=getHabits();
+  document.getElementById('habits-grid').innerHTML=HABITS_DEF.map(h=>`
+    <div class="habit-card ${done[h.id]?'done':''}" onclick="toggleHabit('${h.id}')">
+      <div class="habit-icon">${h.icon}</div>
+      <div class="habit-name">${h.name}</div>
+      <div class="habit-streak">${h.desc}</div>
+    </div>
+  `).join('');
+
+  // Menu
+  const menu=load('menu_blocks',DEFAULT_MENU);
+  document.getElementById('dash-menu').innerHTML=menu.map(b=>`
+    <div class="menu-time-block">
+      <div class="menu-time">${escHtml(b.time)}</div>
+      <div class="menu-label">${escHtml(b.label)}</div>
+      <div class="menu-detail">${escHtml(b.detail).replace(/\n/g,'<br>')}</div>
+    </div>
+  `).join('');
+
+  // Progress
+  const keys=['weight','waist','hip','thigh','calf','arm'];
+  const latest={};
+  keys.forEach(k=>{const r=recs.find(x=>x[k]!=null);latest[k]=r?r[k]:null;});
+  let html='';
+  keys.forEach(k=>{
+    const cur=latest[k],ini=INITIAL[k],tgt=TARGET[k];
+    if(cur===null){
+      html+=`<div class="prog-item">
+        <div class="prog-header"><div class="prog-name">${LABELS[k]}</div><div class="prog-nums" style="color:var(--muted);font-size:11px;">未記錄</div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:0%"></div></div>
+      </div>`;return;
+    }
+    const totalGap=ini-tgt;
+    const achieved=ini-cur;
+    const pct=Math.max(0,Math.min(100,(achieved/totalGap)*100));
+    const delta=(cur-ini).toFixed(1);
+    const isDone=cur<=tgt;
+    html+=`<div class="prog-item">
+      <div class="prog-header">
+        <div class="prog-name">${LABELS[k]}</div>
+        <div class="prog-nums"><b>${cur}</b> / ${tgt} ${UNITS[k]}</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill ${isDone?'done':''}" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="prog-delta ${parseFloat(delta)>0?'worse':''}">${parseFloat(delta)>0?'+':''}${delta} ${UNITS[k]}　完成 ${pct.toFixed(0)}%</div>
+    </div>`;
+  });
+  document.getElementById('dash-progress').innerHTML=html;
+}
+
+// ── RENDER HISTORY ──
+function renderHistory(){
+  const recs=load('records',[]);
+  const el=document.getElementById('history-list');
+  if(!recs.length){el.innerHTML='<div class="empty">還沒有任何記錄</div>';return;}
+  el.innerHTML=recs.map((r,i)=>{
+    const dims=['waist','hip','thigh','calf','arm']
+      .filter(k=>r[k]!=null)
+      .map(k=>`<div class="hist-tag">${LABELS[k]} <span>${r[k]}</span></div>`)
+      .join('');
+    return `<div class="hist-item">
+      <div class="hist-date">
+        <span>${fmtDate(r.date)}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${r.weight?`<span class="hist-weight">${r.weight} kg</span>`:''}
+          <button class="del-btn" onclick="deleteRecord(${i})">×</button>
+        </div>
+      </div>
+      ${dims?`<div class="hist-dims">${dims}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ── INIT ──
+document.getElementById('rec-date').value=todayStr();
+renderHome();
+renderPlanView();
+</script>
+</body>
+</html>
